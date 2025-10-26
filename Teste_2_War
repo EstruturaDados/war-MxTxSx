@@ -1,0 +1,147 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+// Documentação: Definição da struct Territorio.
+// Estrutura para armazenar informações de um território.
+typedef struct {
+    char nome[30];
+    char cor[10];
+    int tropas;
+} Territorio;
+
+// Documentação: Função para cadastrar os territórios.
+// Recebe um ponteiro para o vetor de territórios e o número de territórios.
+void cadastrarTerritorios(Territorio* mapa, int numTerritorios) {
+    printf("--- Cadastro de Territorios ---\n");
+    for (int i = 0; i < numTerritorios; i++) {
+        printf("Territorio %d:\n", i);
+        printf("Nome: ");
+        scanf(" %[^\n]", mapa[i].nome);
+        printf("Cor do exercito: ");
+        scanf(" %[^\n]", mapa[i].cor);
+        printf("Numero de tropas: ");
+        scanf("%d", &(mapa[i].tropas));
+        while (getchar() != '\n'); // Limpa o buffer de entrada
+        printf("\n");
+    }
+}
+
+// Documentação: Função para listar todos os territórios.
+// Recebe um ponteiro para o vetor de territórios e o número de territórios.
+void listarTerritorios(Territorio* mapa, int numTerritorios) {
+    printf("--- Territorios Atuais ---\n");
+    for (int i = 0; i < numTerritorios; i++) {
+        printf("[%d] Nome: %s | Cor: %s | Tropas: %d\n", i, mapa[i].nome, mapa[i].cor, mapa[i].tropas);
+    }
+    printf("--------------------------\n");
+}
+
+// Documentação: Função para simular um ataque.
+// Recebe ponteiros para os territórios atacante e defensor.
+void atacar(Territorio* atacante, Territorio* defensor) {
+    if (strcmp(atacante->cor, defensor->cor) == 0) {
+        printf("Erro: Nao e possivel atacar um territorio da mesma cor!\n");
+        return;
+    }
+    if (atacante->tropas <= 1) {
+        printf("Ataque invalido! O territorio atacante deve ter mais de 1 tropa.\n");
+        return;
+    }
+    
+    printf("\nSimulando ataque de %s contra %s...\n", atacante->nome, defensor->nome);
+    
+    int dadoAtacante = rand() % 6 + 1;
+    int dadoDefensor = rand() % 6 + 1;
+    
+    printf("%s rola um %d!\n", atacante->nome, dadoAtacante);
+    printf("%s rola um %d!\n", defensor->nome, dadoDefensor);
+    
+    if (dadoAtacante > dadoDefensor) {
+        printf("Vitoria do atacante! %s conquista %s!\n", atacante->nome, defensor->nome);
+        strcpy(defensor->cor, atacante->cor);
+        int tropasTransferidas = atacante->tropas / 2;
+        defensor->tropas = tropasTransferidas;
+        atacante->tropas -= tropasTransferidas;
+    } else {
+        printf("Vitoria do defensor! %s defende seu territorio.\n", defensor->nome);
+        atacante->tropas--;
+        if (atacante->tropas < 1) {
+            atacante->tropas = 1; // Garante que o atacante nao perca seu territorio
+        }
+    }
+}
+
+// Documentação: Função para liberar a memória alocada.
+void liberarMemoria(Territorio* mapa) {
+    free(mapa);
+    printf("\nMemoria liberada com sucesso!\n");
+}
+
+int main() {
+    // Inicializa a semente do gerador de números aleatórios.
+    srand(time(NULL));
+
+    int numTerritorios;
+    printf("Quantos territorios serao cadastrados? ");
+    scanf("%d", &numTerritorios);
+    while (getchar() != '\n'); // Limpa o buffer de entrada
+
+    // Documentação: Alocação dinâmica de memória para o vetor de territórios.
+    Territorio* mapa = (Territorio*)calloc(numTerritorios, sizeof(Territorio));
+    if (mapa == NULL) {
+        printf("Erro: Falha na alocacao de memoria.\n");
+        return 1;
+    }
+
+    cadastrarTerritorios(mapa, numTerritorios);
+
+    int opcao;
+    int atacanteIndex, defensorIndex;
+    
+    do {
+        printf("\n--- Menu do Jogo ---\n");
+        printf("1. Listar territorios\n");
+        printf("2. Realizar ataque\n");
+        printf("3. Sair\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
+        while (getchar() != '\n'); // Limpa o buffer de entrada
+
+        switch (opcao) {
+            case 1:
+                listarTerritorios(mapa, numTerritorios);
+                break;
+            case 2:
+                listarTerritorios(mapa, numTerritorios);
+                printf("Escolha o indice do territorio atacante: ");
+                scanf("%d", &atacanteIndex);
+                printf("Escolha o indice do territorio defensor: ");
+                scanf("%d", &defensorIndex);
+                while (getchar() != '\n'); // Limpa o buffer de entrada
+                
+                // Validação dos índices
+                if (atacanteIndex >= 0 && atacanteIndex < numTerritorios &&
+                    defensorIndex >= 0 && defensorIndex < numTerritorios &&
+                    atacanteIndex != defensorIndex) {
+                    atacar(&mapa[atacanteIndex], &mapa[defensorIndex]);
+                    listarTerritorios(mapa, numTerritorios);
+                } else {
+                    printf("Indices invalidos. Tente novamente.\n");
+                }
+                break;
+            case 3:
+                printf("Encerrando o jogo.\n");
+                break;
+            default:
+                printf("Opcao invalida. Tente novamente.\n");
+                break;
+        }
+    } while (opcao != 3);
+
+    // Documentação: Liberação da memória alocada dinamicamente.
+    liberarMemoria(mapa);
+
+    return 0;
+}
